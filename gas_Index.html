@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>럭키 드로우 - 무작위 숫자 뽑기</title>
+    <!-- 구글 폰트 적용 (Outfit, Noto Sans KR) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;600;800&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- 통합 CSS 스타일시트 -->
+    <style>
+        /* ==========================================================================
+           [글로벌 스타일 및 변수 정의]
+           ========================================================================== */
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.12);
+            
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+            --primary-hover: linear-gradient(135deg, #4f46e5 0%, #9333ea 50%, #db2777 100%);
+            
+            --accent-cyan: #06b6d4;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-rose: #f43f5e;
+            
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            
+            --shadow-glow: 0 0 25px rgba(168, 85, 247, 0.35);
+            --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-bounce: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow-x: hidden;
+            padding: 20px;
+        }
+
+        /* 배경 구체 애니메이션 */
+        .background-globes {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .globe {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.45;
+            animation: floatGlobe 12s infinite alternate ease-in-out;
+        }
+
+        .globe-1 {
+            width: 350px; height: 350px;
+            background: #6366f1;
+            top: -50px; left: -50px;
+        }
+
+        .globe-2 {
+            width: 400px; height: 400px;
+            background: #ec4899;
+            bottom: -100px; right: -50px;
+            animation-delay: -4s;
+        }
+
+        .globe-3 {
+            width: 300px; height: 300px;
+            background: #06b6d4;
+            top: 40%; left: 60%;
+            animation-delay: -8s;
+        }
+
+        @keyframes floatGlobe {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(60px, 40px) scale(1.15); }
+        }
+
+        /* 레이아웃 컨테이너 */
+        .app-container {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .app-header {
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        .logo-icon {
+            font-size: 3rem;
+            margin-bottom: 8px;
+            display: inline-block;
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .app-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+        }
+
+        .app-subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin-top: 6px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-main);
+        }
+
+        .input-group-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+        }
+
+        .range-separator {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding-bottom: 12px;
+        }
+
+        .input-field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .margin-top {
+            margin-top: 18px;
+        }
+
+        label {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .label-tip {
+            font-size: 0.78rem;
+            color: #cbd5e1;
+            font-weight: normal;
+        }
+
+        input[type="number"], input[type="text"], select {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-md);
+            color: var(--text-main);
+            font-size: 1rem;
+            font-family: inherit;
+            outline: none;
+            transition: var(--transition-fast);
+        }
+
+        input[type="number"]:focus, input[type="text"]:focus, select:focus {
+            border-color: #a855f7;
+            box-shadow: 0 0 12px rgba(168, 85, 247, 0.4);
+        }
+
+        .options-grid {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.4);
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .option-label {
+            font-size: 0.9rem;
+            color: var(--text-main);
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0; height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #334155;
+            transition: var(--transition-fast);
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px; width: 18px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: var(--transition-fast);
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background: linear-gradient(90deg, #6366f1, #a855f7);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .primary-btn {
+            width: 100%;
+            margin-top: 24px;
+            padding: 16px;
+            border: none;
+            border-radius: var(--radius-md);
+            background: var(--primary-gradient);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition-fast);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 35px rgba(168, 85, 247, 0.6);
+        }
+
+        .secondary-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: var(--text-main);
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: var(--transition-fast);
+        }
+
+        .secondary-btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .secondary-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .danger-btn {
+            background: rgba(244, 63, 94, 0.15);
+            border: 1px solid rgba(244, 63, 94, 0.3);
+            color: #fca5a5;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: var(--transition-fast);
+        }
+
+        .danger-btn:hover {
+            background: rgba(244, 63, 94, 0.3);
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .result-header .card-title {
+            margin-bottom: 0;
+        }
+
+        .result-display {
+            min-height: 220px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            align-content: center;
+            gap: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .placeholder-text {
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .placeholder-icon {
+            font-size: 2.5rem;
+            display: block;
+            margin-bottom: 8px;
+            opacity: 0.6;
+        }
+
+        .number-ball {
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: white;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+            animation: ballAppear 0.5s var(--transition-bounce) forwards;
+            transform: scale(0);
+        }
+
+        @keyframes ballAppear {
+            0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        .ball-theme-0 { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .ball-theme-1 { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .ball-theme-2 { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+        .ball-theme-3 { background: linear-gradient(135deg, #10b981, #047857); }
+        .ball-theme-4 { background: linear-gradient(135deg, #a855f7, #6b21a8); }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .history-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .history-list {
+            list-style: none;
+            max-height: 200px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .history-item {
+            background: rgba(15, 23, 42, 0.4);
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+        }
+
+        .history-time {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .history-numbers {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            letter-spacing: 1px;
+        }
+
+        .empty-history {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 20px 0;
+            font-size: 0.9rem;
+        }
+
+        .app-footer {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="background-globes">
+        <div class="globe globe-1"></div>
+        <div class="globe globe-2"></div>
+        <div class="globe globe-3"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- 헤더 영역 -->
+        <header class="app-header">
+            <div class="logo-icon">🎰</div>
+            <h1 class="app-title">LUCKY DRAW</h1>
+            <p class="app-subtitle">원하는 범위와 개수를 입력하고 행운의 숫자를 뽑아보세요!</p>
+        </header>
+
+        <!-- 메인 콘텐츠 영역 -->
+        <main class="main-content">
+            <!-- 설정 카드 패널 -->
+            <section class="card config-card">
+                <h2 class="card-title">⚙️ 추첨 설정</h2>
+
+                <form id="drawForm" onsubmit="return false;">
+                    <!-- 범위 입력 (최소값 ~ 최대값) -->
+                    <div class="input-group-row">
+                        <div class="input-field">
+                            <label for="minNum">최소 숫자</label>
+                            <input type="number" id="minNum" value="1" placeholder="예: 1" required>
+                        </div>
+                        <div class="range-separator">~</div>
+                        <div class="input-field">
+                            <label for="maxNum">최대 숫자</label>
+                            <input type="number" id="maxNum" value="45" placeholder="예: 45" required>
+                        </div>
+                    </div>
+
+                    <!-- 뽑을 개수 입력 -->
+                    <div class="input-field margin-top">
+                        <label for="countNum">뽑을 숫자 개수</label>
+                        <input type="number" id="countNum" value="6" min="1" placeholder="예: 6" required>
+                    </div>
+
+                    <!-- 제외할 숫자 입력 -->
+                    <div class="input-field margin-top">
+                        <label for="excludeNums">
+                            제외할 숫자 <span class="label-tip">(쉼표, 공백으로 구분)</span>
+                        </label>
+                        <input type="text" id="excludeNums" placeholder="예: 3, 7, 12">
+                    </div>
+
+                    <!-- 추가 옵션 설정 -->
+                    <div class="options-grid margin-top">
+                        <!-- 중복 허용 여부 -->
+                        <div class="option-item">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="allowDuplicates">
+                                <span class="slider"></span>
+                            </label>
+                            <span class="option-label">중복 허용</span>
+                        </div>
+
+                        <!-- 효과음 켜기/끄기 -->
+                        <div class="option-item">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="soundToggle" checked>
+                                <span class="slider"></span>
+                            </label>
+                            <span class="option-label">효과음 🔊</span>
+                        </div>
+                    </div>
+
+                    <!-- 정렬 옵션 -->
+                    <div class="input-field margin-top">
+                        <label for="sortOrder">결과 정렬 방식</label>
+                        <select id="sortOrder">
+                            <option value="none">무작위 (추첨된 순서대로)</option>
+                            <option value="asc">오름차순 (작은 숫자부터)</option>
+                            <option value="desc">내림차순 (큰 숫자부터)</option>
+                        </select>
+                    </div>
+
+                    <!-- 추첨 버튼 -->
+                    <button type="button" id="drawBtn" class="primary-btn">
+                        <span class="btn-text">🎲 숫자 뽑기 시작!</span>
+                    </button>
+                </form>
+            </section>
+
+            <!-- 결과 및 디스플레이 카드 패널 -->
+            <section class="card result-card">
+                <div class="result-header">
+                    <h2 class="card-title">🎉 추첨 결과</h2>
+                    <button id="copyBtn" class="secondary-btn small-btn" disabled>
+                        📋 결과 복사
+                    </button>
+                </div>
+
+                <!-- 숫자가 등장할 디스플레이 공간 -->
+                <div id="resultDisplay" class="result-display">
+                    <div class="placeholder-text">
+                        <span class="placeholder-icon">✨</span>
+                        <p>설정을 입력한 후 <strong>'숫자 뽑기 시작'</strong> 버튼을 눌러주세요.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- 히스토리 영역 -->
+        <section class="card history-card">
+            <div class="history-header">
+                <h3 class="history-title">📜 최근 추첨 기록</h3>
+                <button id="clearHistoryBtn" class="danger-btn small-btn">기록 삭제</button>
+            </div>
+            <ul id="historyList" class="history-list">
+                <li class="empty-history">아직 추첨 기록이 없습니다.</li>
+            </ul>
+        </section>
+
+        <!-- 푸터 -->
+        <footer class="app-footer">
+            <p>© 2026 Lucky Draw App. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- 통합 자바스크립트 로직 -->
+    <script>
+        // DOM 요소 참조
+        const minNumInput = document.getElementById('minNum');
+        const maxNumInput = document.getElementById('maxNum');
+        const countNumInput = document.getElementById('countNum');
+        const excludeNumsInput = document.getElementById('excludeNums');
+        const allowDuplicatesCheckbox = document.getElementById('allowDuplicates');
+        const soundToggleCheckbox = document.getElementById('soundToggle');
+        const sortOrderSelect = document.getElementById('sortOrder');
+        const drawBtn = document.getElementById('drawBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const resultDisplay = document.getElementById('resultDisplay');
+        const historyList = document.getElementById('historyList');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+        let currentResults = [];
+        let historyData = [];
+
+        // Web Audio API 오디오 합성기
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function playSound(freq, type = 'sine', duration = 0.1) {
+            if (!soundToggleCheckbox.checked) return;
+            try {
+                if (!audioCtx) {
+                    audioCtx = new AudioContext();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                console.error('오디오 재생 실패:', e);
+            }
+        }
+
+        function playWinSound() {
+            if (!soundToggleCheckbox.checked) return;
+            const notes = [523.25, 659.25, 783.99, 1046.50];
+            notes.forEach((freq, index) => {
+                setTimeout(() => {
+                    playSound(freq, 'triangle', 0.25);
+                }, index * 120);
+            });
+        }
+
+        function parseExcludedNumbers(inputStr) {
+            if (!inputStr || !inputStr.trim()) return [];
+            const rawTokens = inputStr.split(/[\s,]+/);
+            const excludedList = [];
+            for (const token of rawTokens) {
+                if (token.trim() !== '') {
+                    const num = parseInt(token.trim(), 10);
+                    if (!isNaN(num) && !excludedList.includes(num)) {
+                        excludedList.push(num);
+                    }
+                }
+            }
+            return excludedList;
+        }
+
+        function validateInputs(min, max, count, allowDuplicates, availablePoolSize) {
+            if (isNaN(min) || isNaN(max) || isNaN(count)) {
+                alert('올바른 숫자를 입력해 주세요.');
+                return false;
+            }
+            if (min > max) {
+                alert('최소 숫자는 최대 숫자보다 작거나 같아야 합니다.');
+                return false;
+            }
+            if (count <= 0) {
+                alert('뽑을 개수는 최소 1개 이상이어야 합니다.');
+                return false;
+            }
+            if (availablePoolSize <= 0) {
+                alert('제외할 숫자를 뺀 후 추첨 가능한 숫자가 없습니다. 숫자 범위나 제외할 숫자를 조정해 주세요.');
+                return false;
+            }
+            if (!allowDuplicates && count > availablePoolSize) {
+                alert(`중복을 허용하지 않을 경우, 뽑을 개수(${count}개)는 제외 숫자를 뺀 남은 가능 숫자 수(${availablePoolSize}개)를 초과할 수 없습니다.`);
+                return false;
+            }
+            return true;
+        }
+
+        async function startDraw() {
+            const min = parseInt(minNumInput.value, 10);
+            const max = parseInt(maxNumInput.value, 10);
+            const count = parseInt(countNumInput.value, 10);
+            const allowDuplicates = allowDuplicatesCheckbox.checked;
+            const sortOrder = sortOrderSelect.value;
+
+            const excludedNumbers = parseExcludedNumbers(excludeNumsInput.value);
+
+            const availablePool = [];
+            for (let i = min; i <= max; i++) {
+                if (!excludedNumbers.includes(i)) {
+                    availablePool.push(i);
+                }
+            }
+
+            if (!validateInputs(min, max, count, allowDuplicates, availablePool.length)) return;
+
+            drawBtn.disabled = true;
+            drawBtn.querySelector('.btn-text').textContent = '🎲 추첨 진행 중...';
+            copyBtn.disabled = true;
+
+            const pickedNumbers = [];
+
+            if (allowDuplicates) {
+                for (let i = 0; i < count; i++) {
+                    const randomIndex = Math.floor(Math.random() * availablePool.length);
+                    pickedNumbers.push(availablePool[randomIndex]);
+                }
+            } else {
+                const shuffledPool = [...availablePool];
+                for (let i = shuffledPool.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffledPool[i], shuffledPool[j]] = [shuffledPool[j], shuffledPool[i]];
+                }
+
+                for (let i = 0; i < count; i++) {
+                    pickedNumbers.push(shuffledPool[i]);
+                }
+            }
+
+            if (sortOrder === 'asc') {
+                pickedNumbers.sort((a, b) => a - b);
+            } else if (sortOrder === 'desc') {
+                pickedNumbers.sort((a, b) => b - a);
+            }
+
+            currentResults = pickedNumbers;
+
+            await animateResultDisplay(pickedNumbers);
+
+            drawBtn.disabled = false;
+            drawBtn.querySelector('.btn-text').textContent = '🎲 숫자 뽑기 시작!';
+            copyBtn.disabled = false;
+
+            addHistoryRecord(pickedNumbers);
+            playWinSound();
+        }
+
+        async function animateResultDisplay(numbers) {
+            resultDisplay.innerHTML = '';
+
+            for (let i = 0; i < numbers.length; i++) {
+                const num = numbers[i];
+
+                const ball = document.createElement('div');
+                ball.classList.add('number-ball');
+                
+                const themeIndex = Math.abs(num) % 5;
+                ball.classList.add(`ball-theme-${themeIndex}`);
+                
+                ball.textContent = num;
+                resultDisplay.appendChild(ball);
+
+                playSound(400 + (i * 50), 'sine', 0.08);
+
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+        }
+
+        function copyToClipboard() {
+            if (currentResults.length === 0) return;
+
+            const textToCopy = currentResults.join(', ');
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = '✅ 복사 완료!';
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                alert('복사 실패: ' + err);
+            });
+        }
+
+        function addHistoryRecord(numbers) {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            const record = {
+                time: timeString,
+                numbers: numbers.join(', ')
+            };
+
+            historyData.unshift(record);
+            if (historyData.length > 10) historyData.pop();
+
+            renderHistory();
+        }
+
+        function renderHistory() {
+            if (historyData.length === 0) {
+                historyList.innerHTML = '<li class="empty-history">아직 추첨 기록이 없습니다.</li>';
+                return;
+            }
+
+            historyList.innerHTML = '';
+            historyData.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'history-item';
+                li.innerHTML = `
+                    <span class="history-time">${item.time}</span>
+                    <span class="history-numbers">${item.numbers}</span>
+                `;
+                historyList.appendChild(li);
+            });
+        }
+
+        function clearHistory() {
+            if (historyData.length === 0) return;
+            if (confirm('모든 추첨 기록을 삭제하시겠습니까?')) {
+                historyData = [];
+                renderHistory();
+            }
+        }
+
+        drawBtn.addEventListener('click', startDraw);
+        copyBtn.addEventListener('click', copyToClipboard);
+        clearHistoryBtn.addEventListener('click', clearHistory);
+    </script>
+</body>
+</html>
